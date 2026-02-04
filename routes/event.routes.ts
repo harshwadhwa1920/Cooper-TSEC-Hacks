@@ -1,36 +1,19 @@
-import { Router, Response } from "express";
-import { authenticate, AuthRequest } from "../middleware/auth.middleware";
+import { Router } from "express";
+import { authenticate } from "../middleware/auth.middleware";
+import {
+  createEvent,
+  getAllEvents,
+  getEventById,
+  joinEvent,
+  removeParticipant
+} from "../controllers/event.controller";
 
 const router = Router();
 
-router.post("/", authenticate, async (req: AuthRequest, res: Response) => {
-  const { name } = req.body;
-
-  res.status(201).json({
-    eventId: "event-id",
-    name,
-    createdBy: req.user?.userId
-  });
-});
-
-router.get("/", authenticate, async (req: AuthRequest, res: Response) => {
-  res.json({ events: [] });
-});
-
-router.get("/:eventId", authenticate, async (req: AuthRequest, res: Response) => {
-  res.json({ eventId: req.params.eventId });
-});
-
-router.post("/:eventId/join", authenticate, async (req: AuthRequest, res: Response) => {
-  res.json({ message: "Joined event" });
-});
-
-router.delete(
-  "/:eventId/participants/:userId",
-  authenticate,
-  async (req: AuthRequest, res: Response) => {
-    res.json({ message: "Participant removed" });
-  }
-);
+router.post("/", authenticate, createEvent);
+router.get("/", authenticate, getAllEvents);
+router.get("/:eventId", authenticate, getEventById);
+router.post("/:eventId/join", authenticate, joinEvent);
+router.delete("/:eventId/participants/:userId", authenticate, removeParticipant);
 
 export default router;

@@ -1,30 +1,10 @@
-import { Router, Response } from "express";
-import { authenticate, AuthRequest } from "../middleware/auth.middleware";
+import { Router } from "express";
+import { authenticate } from "../middleware/auth.middleware";
+import { depositFunds, getWalletBalance } from "../controllers/wallet.controller";
 
 const router = Router();
 
-router.post(
-  "/:eventId/deposit",
-  authenticate,
-  async (req: AuthRequest, res: Response) => {
-    const { amount } = req.body;
-
-    res.json({
-      eventId: req.params.eventId,
-      deposited: amount
-    });
-  }
-);
-
-router.get(
-  "/:eventId",
-  authenticate,
-  async (req: AuthRequest, res: Response) => {
-    res.json({
-      eventId: req.params.eventId,
-      balance: 0
-    });
-  }
-);
+router.post("/:eventId/deposit", authenticate, depositFunds);
+router.get("/:eventId", authenticate, getWalletBalance);
 
 export default router;

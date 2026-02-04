@@ -1,29 +1,10 @@
-import { Router, Response } from "express";
-import { authenticate, AuthRequest } from "../middleware/auth.middleware";
+import { Router } from "express";
+import { authenticate } from "../middleware/auth.middleware";
+import { makePayment, getAllPayments } from "../controllers/payment.controller";
 
 const router = Router();
 
-router.post(
-  "/:eventId/pay",
-  authenticate,
-  async (req: AuthRequest, res: Response) => {
-    const { amount, categoryId } = req.body;
-
-    res.json({
-      eventId: req.params.eventId,
-      categoryId,
-      amount,
-      status: "PAID"
-    });
-  }
-);
-
-router.get(
-  "/:eventId",
-  authenticate,
-  async (req: AuthRequest, res: Response) => {
-    res.json({ payments: [] });
-  }
-);
+router.post("/:eventId/pay", authenticate, makePayment);
+router.get("/:eventId", authenticate, getAllPayments);
 
 export default router;

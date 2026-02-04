@@ -1,27 +1,10 @@
-import { Router, Response } from "express";
-import { authenticate, AuthRequest } from "../middleware/auth.middleware";
+import { Router } from "express";
+import { authenticate } from "../middleware/auth.middleware";
+import { settleEvent, getSettlements } from "../controllers/settlement.controller";
 
 const router = Router();
 
-router.post(
-  "/:eventId/settle",
-  authenticate,
-  async (req: AuthRequest, res: Response) => {
-    res.json({
-      eventId: req.params.eventId,
-      status: "SETTLED"
-    });
-  }
-);
-
-router.get(
-  "/:eventId",
-  authenticate,
-  async (req: AuthRequest, res: Response) => {
-    res.json({
-      settlements: []
-    });
-  }
-);
+router.post("/:eventId/settle", authenticate, settleEvent);
+router.get("/:eventId", authenticate, getSettlements);
 
 export default router;
