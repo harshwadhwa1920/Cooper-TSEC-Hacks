@@ -48,12 +48,12 @@ app.get("/health", (req: Request, res: Response) => {
 ========================= */
 
 // (Routes will be implemented later)
-import authRoutes from "./routes/auth.routes";
-import eventRoutes from "./routes/event.routes";
-import walletRoutes from "./routes/wallet.routes";
-import categoryRoutes from "./routes/category.routes";
-import paymentRoutes from "./routes/payment.routes";
-import settlementRoutes from "./routes/settlement.routes";
+import authRoutes from "./routes/auth.routes.ts";
+import eventRoutes from "./routes/event.routes.ts";
+import walletRoutes from "./routes/wallet.routes.ts";
+import categoryRoutes from "./routes/category.routes.ts";
+import paymentRoutes from "./routes/payment.routes.ts";
+import settlementRoutes from "./routes/settlement.routes.ts";
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/events", eventRoutes);
