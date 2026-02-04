@@ -1,5 +1,5 @@
 import type { Request, Response } from "express";
-import db from "../db";
+import db from "../config/db.config";
 
 // GET /users/:id
 export const getUserById = async (req: Request, res: Response) => {

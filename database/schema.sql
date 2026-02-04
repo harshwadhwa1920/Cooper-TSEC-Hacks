@@ -9,6 +9,7 @@ CREATE TABLE users (
 CREATE TABLE events (
     id BIGINT PRIMARY KEY AUTO_INCREMENT,
     name VARCHAR(150) NOT NULL,
+    description TEXT,
     created_by BIGINT NOT NULL,
     status ENUM('active', 'settled') DEFAULT 'active',
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

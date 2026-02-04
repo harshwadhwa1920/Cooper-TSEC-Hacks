@@ -5,10 +5,6 @@ import { requireEventParticipant } from "../middleware/requireEventParticipant.m
 import * as controller from "../controllers/event.controller";
 
 const router = Router();
-
-/* ───────────── Event core ───────────── */
-
-
 // Create event
 router.post(
   "/",
@@ -185,4 +181,3 @@ router.get(
 );
 
 export default router;
-

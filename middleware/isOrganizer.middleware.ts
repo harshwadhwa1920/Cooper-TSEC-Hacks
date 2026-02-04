@@ -1,5 +1,5 @@
 import type { Request, Response, NextFunction } from "express";
-import db from "../db";
+import db from "../config/db.config";
 
 export const isOrganizer = async (
   req: Request,

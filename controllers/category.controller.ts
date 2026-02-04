@@ -7,7 +7,7 @@ export const updateCategory = async (req: Request, res: Response) => {
 
   await db.query(
     `UPDATE expense_categories SET name = ?, total_amount = ? WHERE id = ?`,
-    [name, totalAmount, categoryId]
+    [name, totalAmount,  categoryId]
   );
 
   res.json({ message: "Category updated successfully" });

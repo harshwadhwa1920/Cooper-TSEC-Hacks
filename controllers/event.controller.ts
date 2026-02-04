@@ -1,12 +1,11 @@
 import type { Request, Response } from "express";
 import db from "../config/db.config";
 
-
 export const createEvent = async (req: Request, res: Response) => {
   const { name, description } = req.body;
 
   const [result]: any = await db.query(
-    "INSERT INTO events (name, description, owner_id) VALUES (?, ?, ?)",
+    "INSERT INTO events (name, description, created_by) VALUES (?, ?, ?)",
     [name, description, req.user!.id]
   );
 
@@ -32,7 +31,6 @@ export const getAllEvents = async (req: Request, res: Response) => {
     `,
     [req.user!.id]
   );
-
   res.json(rows);
 };
 
@@ -64,7 +62,6 @@ export const removeParticipant = async (req: Request, res: Response) => {
     "DELETE FROM event_participants WHERE event_id = ? AND user_id = ?",
     [eventId, userId]
   );
-
   res.json({ message: "Participant removed" });
 };
 
@@ -87,11 +84,31 @@ export const deleteEvent = async (req: Request, res: Response) => {
 /* Participation */
 export const inviteUser = async (req: Request, res: Response) => {
   const { userId } = req.body;
+  const eventId = req.params.eventId;
+
+  // Check if user exists
+  const [userRows]: any = await db.query(
+    "SELECT id FROM users WHERE id = ?",
+    [userId]
+  );
+  if (!userRows.length) {
+    return res.status(404).json({ message: "User not found" });
+  }
+
+  // Check if already a participant
+  const [participantRows]: any = await db.query(
+    "SELECT id FROM event_participants WHERE event_id = ? AND user_id = ?",
+    [eventId, userId]
+  );
+  if (participantRows.length) {
+    return res.status(400).json({ message: "User is already a participant" });
+  }
+
   await db.query(
     "INSERT INTO event_participants (event_id, user_id) VALUES (?, ?)",
-    [req.params.eventId, userId]
+    [eventId, userId]
   );
-  res.json({ message: "User invited" });
+  res.json({ message: "User invited successfully" });
 };
 
 export const getParticipants = async (req: Request, res: Response) => {
@@ -130,7 +147,7 @@ export const getDeposits = async (req: Request, res: Response) => {
 /* Rules & categories */
 export const addCategory = async (req: Request, res: Response) => {
   await db.query(
-    "INSERT INTO categories (event_id, name) VALUES (?, ?)",
+    "INSERT INTO expense_categories (event_id, name) VALUES (?, ?)",
     [req.params.eventId, req.body.name]
   );
   res.json({ message: "Category added" });
@@ -138,23 +155,24 @@ export const addCategory = async (req: Request, res: Response) => {
 
 export const getCategories = async (req: Request, res: Response) => {
   const [rows]: any = await db.query(
-    "SELECT * FROM categories WHERE event_id = ?",
+    "SELECT * FROM expense_categories WHERE event_id = ?",
     [req.params.eventId]
   );
   res.json(rows);
 };
 
 export const addRule = async (req: Request, res: Response) => {
+  const { maxAmount, allowedRoles, approvalRequired } = req.body;
   await db.query(
-    "INSERT INTO rules (event_id, rule) VALUES (?, ?)",
-    [req.params.eventId, req.body.rule]
+    "INSERT INTO payment_rules (event_id, max_amount, allowed_roles, approval_required) VALUES (?, ?, ?, ?)",
+    [req.params.eventId, maxAmount, allowedRoles, approvalRequired]
   );
   res.json({ message: "Rule added" });
 };
 
 export const getRules = async (req: Request, res: Response) => {
   const [rows]: any = await db.query(
-    "SELECT * FROM rules WHERE event_id = ?",
+    "SELECT * FROM payment_rules WHERE event_id = ?",
     [req.params.eventId]
   );
   res.json(rows);
