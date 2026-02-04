@@ -1,66 +1,154 @@
-CREATE TABLE IF NOT EXISTS users (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  email VARCHAR(255) NOT NULL UNIQUE,
-  password VARCHAR(255) NOT NULL,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+CREATE TABLE users (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(100) NOT NULL,
+    email VARCHAR(150) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE TABLE IF NOT EXISTS events (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  created_by INT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (created_by) REFERENCES users(id) ON DELETE SET NULL
+CREATE TABLE events (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    name VARCHAR(150) NOT NULL,
+    created_by BIGINT NOT NULL,
+    status ENUM('active', 'settled') DEFAULT 'active',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_events_creator
+        FOREIGN KEY (created_by) REFERENCES users(id)
 );
 
-CREATE TABLE IF NOT EXISTS categories (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  name VARCHAR(255) NOT NULL
+CREATE TABLE event_participants (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    event_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    role ENUM('organizer', 'member') DEFAULT 'member',
+
+    CONSTRAINT fk_ep_event
+        FOREIGN KEY (event_id) REFERENCES events(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_ep_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE CASCADE,
+
+    UNIQUE (event_id, user_id)
 );
 
-CREATE TABLE IF NOT EXISTS bills (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  category_id INT,
-  image_url VARCHAR(2083),
-  extracted_amount DECIMAL(10, 2),
-  merchant VARCHAR(255),
-  uploaded_by INT,
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
-  FOREIGN KEY (uploaded_by) REFERENCES users(id) ON DELETE CASCADE
+CREATE TABLE event_wallets (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    event_id BIGINT NOT NULL UNIQUE,
+    balance DECIMAL(10,2) DEFAULT 0.00,
+
+    CONSTRAINT fk_wallet_event
+        FOREIGN KEY (event_id) REFERENCES events(id)
+        ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS payment_rules (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  event_id INT,
-  max_amount DECIMAL(10, 2),
-  allowed_roles VARCHAR(255),
-  approval_required BOOLEAN DEFAULT FALSE,
-  FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE
+CREATE TABLE deposits (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    event_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    payment_txn_id VARCHAR(100),
+    status ENUM('pending', 'completed', 'failed') DEFAULT 'completed',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_deposit_event
+        FOREIGN KEY (event_id) REFERENCES events(id),
+
+    CONSTRAINT fk_deposit_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
-CREATE TABLE IF NOT EXISTS payments (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  event_id INT,
-  category_id INT,
-  paid_by INT,
-  amount DECIMAL(10, 2),
-  gateway_txn_id VARCHAR(255),
-  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
-  FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL,
-  FOREIGN KEY (paid_by) REFERENCES users(id) ON DELETE SET NULL
+CREATE TABLE expense_categories (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    event_id BIGINT NOT NULL,
+    name VARCHAR(100) NOT NULL,
+    total_amount DECIMAL(10,2) DEFAULT 0.00,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_category_event
+        FOREIGN KEY (event_id) REFERENCES events(id)
+        ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS settlements (
-  id INT AUTO_INCREMENT PRIMARY KEY,
-  event_id INT,
-  user_id INT,
-  final_share DECIMAL(10, 2),
-  deposited DECIMAL(10, 2) DEFAULT 0,
-  refund_amount DECIMAL(10, 2) DEFAULT 0,
-  FOREIGN KEY (event_id) REFERENCES events(id) ON DELETE CASCADE,
-  FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+CREATE TABLE category_participants (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    category_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+
+    CONSTRAINT fk_cp_category
+        FOREIGN KEY (category_id) REFERENCES expense_categories(id)
+        ON DELETE CASCADE,
+
+    CONSTRAINT fk_cp_user
+        FOREIGN KEY (user_id) REFERENCES users(id)
+        ON DELETE CASCADE,
+
+    UNIQUE (category_id, user_id)
+);
+
+CREATE TABLE bills (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    category_id BIGINT NOT NULL,
+    image_url TEXT NOT NULL,
+    extracted_amount DECIMAL(10,2),
+    merchant VARCHAR(150),
+    uploaded_by BIGINT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_bill_category
+        FOREIGN KEY (category_id) REFERENCES expense_categories(id),
+
+    CONSTRAINT fk_bill_user
+        FOREIGN KEY (uploaded_by) REFERENCES users(id)
+);
+
+CREATE TABLE payment_rules (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    event_id BIGINT NOT NULL,
+    max_amount DECIMAL(10,2),
+    allowed_roles VARCHAR(50), -- e.g. 'organizer,member'
+    approval_required BOOLEAN DEFAULT FALSE,
+
+    CONSTRAINT fk_rule_event
+        FOREIGN KEY (event_id) REFERENCES events(id)
+        ON DELETE CASCADE
+);
+
+CREATE TABLE payments (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    event_id BIGINT NOT NULL,
+    category_id BIGINT,
+    paid_by BIGINT NOT NULL,
+    amount DECIMAL(10,2) NOT NULL,
+    gateway_txn_id VARCHAR(100),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_payment_event
+        FOREIGN KEY (event_id) REFERENCES events(id),
+
+    CONSTRAINT fk_payment_category
+        FOREIGN KEY (category_id) REFERENCES expense_categories(id),
+
+    CONSTRAINT fk_payment_user
+        FOREIGN KEY (paid_by) REFERENCES users(id)
+);
+
+CREATE TABLE settlements (
+    id BIGINT PRIMARY KEY AUTO_INCREMENT,
+    event_id BIGINT NOT NULL,
+    user_id BIGINT NOT NULL,
+    final_share DECIMAL(10,2) NOT NULL,
+    deposited DECIMAL(10,2) NOT NULL,
+    refund_amount DECIMAL(10,2),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    CONSTRAINT fk_settlement_event
+        FOREIGN KEY (event_id) REFERENCES events(id),
+
+    CONSTRAINT fk_settlement_user
+        FOREIGN KEY (user_id) REFERENCES users(id),
+
+    UNIQUE (event_id, user_id)
 );

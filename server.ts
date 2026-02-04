@@ -59,19 +59,15 @@ import authRoutes from "./routes/auth.routes";
 import eventRoutes from "./routes/event.routes";
 import ruleRoutes from "./routes/rule.routes";
 import userRoutes from "./routes/user.routes";
-import walletRoutes from "./routes/wallet.routes";
 import categoryRoutes from "./routes/category.routes";
-import paymentRoutes from "./routes/payment.routes";
-import settlementRoutes from "./routes/settlement.routes";
+
 
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/events", eventRoutes);
 app.use("/api/v1/rules", ruleRoutes);
 app.use("/api/v1/users", userRoutes);
-app.use("/api/v1/wallets", walletRoutes);
 app.use("/api/v1/categories", categoryRoutes);
-app.use("/api/v1/payments", paymentRoutes);
-app.use("/api/v1/settlements", settlementRoutes);
+
 
 /* =========================
    404 Handler
